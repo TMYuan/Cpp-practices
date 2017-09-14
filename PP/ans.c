@@ -23,14 +23,24 @@ void bubbleSort(struct pair arr[], int n)
 				swap(&arr[j], &arr[j+1]);
 }
 
-int check(int arr[], int n, int t){
+int check(int arr[], int v1, int v2, int n){
 	int i=0;
+	if(arr[v1] == 2){
+		return 0;
+	}
+	if(arr[v2] == 2){
+		return 0;
+	}
+	++arr[v1];
+	++arr[v2];
 	for(i=0; i<n; ++i){
-		if(arr[i] == t){
-			return 0;
+		if(arr[i] == 1){
+			return 1;
 		}
 	}
-	return 1;
+	--arr[v1];
+	--arr[v2];
+	return 0;
 }
 
 double distance(double x1, double x2, double y1, double y2){
@@ -40,7 +50,13 @@ double distance(double x1, double x2, double y1, double y2){
 	return sqrt(x_pow+y_pow);
 }
 
-
+double sum(struct pair arr[], int n){
+	int i=0, total=0;
+	for(i=0; i<n; i++){
+		total += arr[i].dis;
+	}
+	return total;
+}
 
 int main(int argc, char* argv[]){
 	int num;
@@ -77,35 +93,117 @@ int main(int argc, char* argv[]){
 		printf("node1:%d, node2:%d, dis:%lf\n", pair_arr[i].node1+1, pair_arr[i].node2+1, pair_arr[i].dis);
 	}
 	
-	int time=0;
-	int *start_node, *end_node;
-	struct pair *in_list;
-	in_list = malloc(sizeof(struct pair)*(num+1));
-	start_node = malloc(sizeof(int) * (num+1));
-	end_node = malloc(sizeof(int) * (num+1));
-	for(i=0; i<count; i++){
-		if(time == 0){
-			in_list[0] = pair_arr[i];
-			start_node[0] = pair_arr[i].node1;
-			end_node[0] = pair_arr[i].node2;
-			++time;
+	int times=0;
+	int *ver_count;
+	struct pair *edge;
+	ver_count = malloc(sizeof(int)*(num));
+	edge = malloc(sizeof(struct pair)*num);
+	for(i=0; i<num; ++i){
+		ver_count[i] = 0;
+	}
+
+	for(i=0; i<count; ++i){
+		if(times == num){
+			break;
+		}
+		int v1, v2;
+		v1 = pair_arr[i].node1;
+		v2 = pair_arr[i].node2;
+		if(times == 0 || check(ver_count, v1, v2, num) == 1){
+			edge[times] = pair_arr[i];
+			if(v1 > v2){
+				edge[times].node1 = v2;
+				edge[times].node2 = v1;
+			}
+			if(times == 0){
+				++ver_count[v1];
+				++ver_count[v2];
+			}
+			printf("add node1:%d, node2:%d\n", v1+1, v2+1);
+			printf("v[%d]: %d, v[%d]: %d\n", v1+1, ver_count[v1], v2+1, ver_count[v2]);
+			++times;
+		}
+		else if(times == num-1){
+			if(ver_count[v1] == 1 && ver_count[v2] == 1){
+				edge[times] = pair_arr[i];
+				if(v1 > v2){
+					edge[times].node1 = v2;
+					edge[times].node2 = v1;
+				}
+				++times;
+			}
+		}
+	}
+
+	for(i=0; i<num; i++){
+		printf("node1: %d, node2: %d, dist: %lf\n", edge[i].node1+1, edge[i].node2+1, edge[i].dis);
+	}
+
+	times = 0;
+	fprintf(output, "%lf\n", sum(edge, num));
+	fprintf(output, "1\n");
+	for(i=0; i<num; ++i){
+		ver_count[i] = 0;
+	}
+	
+	int *v1_list, *v2_list;
+	v1_list = malloc(sizeof(int)*(num));
+	v2_list = malloc(sizeof(int)*(num));
+	for(i=0; i<num; i++){
+		v1_list[i] = -1;
+		v2_list[i] = -1;
+	}
+	for(i=0; i<num; i++){
+		if(v1_list[edge[i].node1] == -1){
+			v1_list[edge[i].node1] = edge[i].node2;
 		}
 		else{
-			if(check(start_node, time, pair_arr[i].node1) == 1 && check(end_node, time, pair_arr[i].node2) == 1 || time == num){
-				in_list[time] = pair_arr[i];
-	                        start_node[time] = pair_arr[i].node1;
-        	                end_node[time] = pair_arr[i].node2;
-                	        ++time;
+			v2_list[edge[i].node1] = edge[i].node2;
+		}
+		if(v1_list[edge[i].node2] == -1){
+			v1_list[edge[i].node2] = edge[i].node1;
+		}
+		else{
+			v2_list[edge[i].node2] = edge[i].node1;
+		}
+	}
+
+	for(i=0; i<num; ++i){
+		printf("%d ", v1_list[i]+1);
+	}
+	printf("\n");
+
+	for(i=0; i<num; ++i){
+		printf("%d ", v2_list[i]+1);
+	}
+	printf("\n");
+
+	int point_now=0, point_past=0;
+	for(i=0; i<num-1; ++i){
+		if(i == 0){
+			if(v1_list[0] < v2_list[0]){
+				point_now = v1_list[0];
+				fprintf(output, "%d\n", v1_list[0]+1);
 			}
-			else if(check(end_node, time, pair_arr[i].node1) == 1 && check())
-			if(time == num + 1){
-				break;
+			else{
+				point_now = v2_list[0];
+				fprintf(output, "%d\n", v2_list[0]+1);
+			}
+		}
+		else{
+			if(v1_list[point_now] != point_past){
+				fprintf(output, "%d\n", v1_list[point_now]+1);
+				point_past = point_now;
+				point_now = v1_list[point_now];
+			}
+			else{
+				fprintf(output, "%d\n", v2_list[point_now]+1);
+				point_past = point_now;
+				point_now = v2_list[point_now];
 			}
 		}
 	}
-	for(i=0; i<num+1; i++){
-		printf("start_node: %d, end_node: %d, dist: %lf\n", start_node[i]+1, end_node[i]+1, in_list[i].dis);
-	}
+	fprintf(output, "end\n");
 
 	return 0;
 }
